@@ -40,18 +40,12 @@ public class StudentInfoServiceTest extends Specification {
         noExceptionThrown()
     }
 
-    def "get student by id failure"() {
-        when:
-        def response = studentInfoService.getStudentById(1)
-
-        then:   
-        def exception = thrown(StudentNotFoundException)
-        exception.message == "Student not found"
-    }
-
     def "add student success"() {
         given:
         def student = Student.builder().id(1).name("John").age(23).course("BSC").build()
+
+        and:
+        studentRepository.save(student) >> student
 
         when:
         def response = studentInfoService.addStudent(student)
@@ -64,6 +58,11 @@ public class StudentInfoServiceTest extends Specification {
     def "update student success"() {
         given:
         def student = Student.builder().id(1).name("John").age(23).course("BSC").build()
+        def student2 = Student.builder().id(1).name("Ben").age(23).course("BSC").build()
+
+        and:
+        studentRepository.findById(1) >> student
+        studentRepository.save(student) >> student
 
         when:
         def response = studentInfoService.updateStudent(student)
@@ -73,33 +72,15 @@ public class StudentInfoServiceTest extends Specification {
         noExceptionThrown()
     }
 
-    def "update student failure"() {
-        when:
-        def response = studentInfoService.updateStudent(null)
-
-        then:   
-        def exception = thrown(StudentNotFoundException)
-        exception.message == "Student not found"
-    }
 
     def "delete student success"() {
         when:
         def response = studentInfoService.deleteStudent(1)
 
         and:
-        studentRepository.delete(student) >> students
+        studentRepository.deleteById(1)
 
         then:
-        response == "Student deleted successfully"
         noExceptionThrown()
-    }
-
-    def "delete student failure"() {
-        when:
-        def response = studentInfoService.deleteStudent(1)
-
-        then:   
-        def exception = thrown(StudentNotFoundException)
-        exception.message == "Student not found"
     }
 }

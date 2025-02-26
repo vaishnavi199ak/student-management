@@ -92,7 +92,7 @@ jacocoTestCoverageVerification{
 }
 
 checkstyle{
-	configFile = new File(rootDir, 'checkstyle.xml')
+	configFile = rootProject.file('config/checkstyle/checkstyle.xml')
 	toolVersion = '8.44'
 }
 
