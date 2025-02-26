@@ -1,0 +1,99 @@
+plugins {
+	id 'java'
+	id 'org.springframework.boot' version '3.4.3'
+	id 'io.spring.dependency-management' version '1.1.7' 
+	id 'checkstyle'
+	id 'jacoco'
+	id 'org.barfuin.gradle.jacocolog' version '3.1.0'
+	id 'groovy'
+}
+
+group = 'com.mycompany'
+version = '0.0.1-SNAPSHOT'
+
+java {
+	toolchain {
+		languageVersion = JavaLanguageVersion.of(21)
+	}
+}
+
+configurations {
+	compileOnly {
+		extendsFrom annotationProcessor
+	}
+}
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation 'org.springframework.boot:spring-boot-starter-webflux'
+	annotationProcessor group: 'org.projectlombok', name: 'lombok', version: '1.18.30'
+	runtimeOnly 'com.h2database:h2'
+
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+	testImplementation group: 'org.apache.groovy', name: 'groovy-all', version: '4.0.10'
+	testImplementation group: 'org.spockframework',name : 'spock-core',version : '2.4-M1-groovy-4.0'
+	testImplementation group: 'org.spockframework', name: 'spock-spring', version: '2.4-M1-groovy-4.0'
+
+
+}
+
+tasks.withType(Test).configureEach {
+	useJUnitPlatform()
+	testLogging{
+		exceptionFormat = 'full'
+	}
+
+}
+sourceSets{
+	test{
+		groovy{
+			srcDirs = ['src/test/groovy']
+		}
+	}
+}
+def testExclusionList = ['**/config/**','**/exception/**','**/model/**', '**/Application*']
+test{
+	finalizedBy jacocoTestReport
+}
+
+jacocoTestReport{
+	afterEvaluate{
+		classDirectories = files(classDirectories.files.collect{
+			fileTree(dir: it, exclude: testExclusionList)
+		})
+	}
+	finalizedBy jacocoTestCoverageVerification
+	dependsOn test
+}
+
+def testCoverageLevels = ['CLASS', 'LINE', 'BRANCH']
+jacocoTestCoverageVerification{
+	afterEvaluate{
+		classDirectories.from = files(classDirectories.files.collect{
+			fileTree(dir: it, exclude: testExclusionList)
+		})
+	}
+	violationRules{
+		testCoverageLevels.forEach((testCoveageLevel)->{
+			rule{
+				limit{
+					counter = testCoveageLevel
+					minimum = 0.80
+				}
+			}
+		})
+	}
+}
+
+checkstyle{
+	configFile = new File(rootDir, 'checkstyle.xml')
+	toolVersion = '8.44'
+}
+
+checkstyleMain.source = "src/main/java"
